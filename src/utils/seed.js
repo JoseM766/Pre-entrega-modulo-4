@@ -5,6 +5,7 @@
 // role: USER (a propósito, por seguridad). Este script sí puede asignar
 // cualquier rol porque corre del lado del servidor, no expuesto por HTTP.
 
+import { logger } from "../config/logger.js";
 import { connectDB, disconnectDB } from "../config/db.config.js";
 import * as usersRepository from "../repositories/users.repository.js";
 import * as productsRepository from "../repositories/products.repository.js";
@@ -42,7 +43,7 @@ const seed = async () => {
       const existingUser = await usersRepository.findUserByEmail(testUser.email);
 
       if (existingUser) {
-        console.log(`Ya existe: ${testUser.email} (${testUser.role}) — se omite`);
+        logger.info(`Ya existe: ${testUser.email} (${testUser.role}) — se omite`);
         continue;
       }
 
@@ -53,14 +54,14 @@ const seed = async () => {
         password: hashedPassword,
       });
 
-      console.log(`Creado: ${testUser.email} / ${testUser.password} (${testUser.role})`);
+      logger.info(`Creado: ${testUser.email} / ${testUser.password} (${testUser.role})`);
     }
 
     for (const testProduct of TEST_PRODUCTS) {
       const existingProduct = await productsRepository.findProductByName(testProduct.name);
 
       if (existingProduct) {
-        console.log(`Ya existe: ${testProduct.name} — se omite`);
+        logger.info(`Ya existe: ${testProduct.name} — se omite`);
         continue;
       }
 
@@ -69,12 +70,12 @@ const seed = async () => {
         status: testProduct.stock > 0 ? PRODUCT_STATUS.AVAILABLE : PRODUCT_STATUS.OUT_OF_STOCK,
       });
 
-      console.log(`Creado producto: ${testProduct.name}`);
+      logger.info(`Creado producto: ${testProduct.name}`);
     }
 
-    console.log("Seed finalizado");
+    logger.info("Seed finalizado");
   } catch (error) {
-    console.error("Error al ejecutar el seed:", error.message);
+    logger.error(`Error al ejecutar el seed: ${error.message}`, { stack: error.stack });
   } finally {
     await disconnectDB();
   }

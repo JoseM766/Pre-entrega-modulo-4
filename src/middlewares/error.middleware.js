@@ -1,4 +1,5 @@
 import { config } from "../config/index.js";
+import { logger } from "../config/logger.js";
 import {
   AppError,
   InvalidJsonError,
@@ -30,10 +31,10 @@ const normalizeError = (error) => {
     return new ValidationError(undefined, error.message);
   }
   if (/^Mongo/.test(error?.name ?? "")) {
-    return new DatabaseError(undefined, error.message);
+    return new DatabaseError(undefined, error.message, error);
   }
 
-  return new InternalServerError(undefined, error?.message);
+  return new InternalServerError(undefined, error?.message, error);
 };
 
 // Ruta inexistente: se registra después de todas las rutas y antes de errorHandler.
@@ -47,9 +48,15 @@ export const errorHandler = (error, req, res, next) => {
 
   const appError = normalizeError(error);
 
-  // Los errores de servidor se registran completos en consola, pero nunca se le muestran al cliente.
+  // Logging: los errores esperados (4xx, del cliente o de negocio) son warning;
+  // los inesperados (5xx) son error y se registran con su stack. Nunca se le muestran al cliente.
+  const origin = `[${req.method} ${req.originalUrl}]`;
   if (appError.statusCode >= 500) {
-    console.error(error);
+    logger.error(`${appError.code}: ${appError.message} ${origin}`, {
+      stack: (appError.cause ?? error)?.stack,
+    });
+  } else {
+    logger.warning(`${appError.code}: ${appError.message} ${origin}`);
   }
 
   const body = {

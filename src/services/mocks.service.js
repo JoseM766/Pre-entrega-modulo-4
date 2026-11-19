@@ -1,3 +1,4 @@
+import { logger } from "../config/logger.js";
 import * as usersRepository from "../repositories/users.repository.js";
 import * as ordersRepository from "../repositories/orders.repository.js";
 import * as deliveriesRepository from "../repositories/deliveries.repository.js";
@@ -53,7 +54,8 @@ const runLoad = async (load) => {
     return await load();
   } catch (error) {
     if (error instanceof AppError) throw error;
-    throw new MockGenerationError(undefined, error?.message);
+    // El error original viaja como "cause": el middleware global lo registra con su stack.
+    throw new MockGenerationError(undefined, error?.message, error);
   }
 };
 
@@ -95,7 +97,11 @@ export const seedUsers = async ({ qty, role }) => {
   const quantity = parseQty(qty, "qty");
   const userRole = parseRole(role);
 
+  logger.debug(`Mocks: seed de ${quantity} usuarios (rol: ${userRole ?? "mixto"})`);
+
   const created = await runLoad(() => insertUsers(quantity, userRole));
+
+  logger.info(`Mocks: se insertaron ${created.length} usuarios de prueba`);
   return { insertados: created.length, coleccion: "users" };
 };
 
@@ -128,6 +134,10 @@ export const generateData = async ({ users, drivers, orders, deliveries } = {}) 
     throw new MockNoDriversError("No hay repartidores para asignar a las entregas: pedí también drivers > 0");
   }
 
+  logger.debug(
+    `Mocks: generateData solicitado (users ${usersQty}, drivers ${driversQty}, orders ${ordersQty}, deliveries ${deliveriesQty})`
+  );
+
   return runLoad(async () => {
     // 1) Usuarios y repartidores
     const createdCustomers = await insertUsers(usersQty, USER_ROLES.USER);
@@ -146,6 +156,7 @@ export const generateData = async ({ users, drivers, orders, deliveries } = {}) 
         ...generateMockOrders(ordersQty - deliveriesQty, customerIds),
       ];
       createdOrders = await ordersRepository.insertManyOrders(ordersData);
+      logger.info(`Mocks: pedidos de prueba creados correctamente (${createdOrders.length})`);
     }
 
     // 3) Entregas: cada una apunta a un pedido real y a un repartidor real
@@ -158,11 +169,16 @@ export const generateData = async ({ users, drivers, orders, deliveries } = {}) 
       );
     }
 
-    return {
+    const result = {
       users: createdCustomers.length,
       drivers: createdDrivers.length,
       orders: createdOrders.length,
       deliveries: createdDeliveries.length,
     };
+
+    logger.info(
+      `Mocks: datos de prueba generados (users ${result.users}, drivers ${result.drivers}, orders ${result.orders}, deliveries ${result.deliveries})`
+    );
+    return result;
   });
 };

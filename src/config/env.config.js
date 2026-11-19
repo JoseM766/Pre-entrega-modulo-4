@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import { NODE_ENVIRONMENTS } from "../constants/index.js";
+import { NODE_ENVIRONMENTS, LOG_LEVELS } from "../constants/index.js";
 
 // Este es el ÚNICO archivo del proyecto que lee process.env.
 // El resto de la app importa el objeto "config" de acá.
@@ -40,6 +40,11 @@ export const config = Object.freeze({
   nodeEnv: process.env.NODE_ENV,
   isProduction: process.env.NODE_ENV === NODE_ENVIRONMENTS.PRODUCTION,
   mongoUri: process.env.MONGODB_URI,
+  // Logging según el entorno: producción registra desde info; desarrollo (y test) desde debug.
+  logs: Object.freeze({
+    level: process.env.NODE_ENV === NODE_ENVIRONMENTS.PRODUCTION ? LOG_LEVELS.INFO : LOG_LEVELS.DEBUG,
+    dir: "logs",
+  }),
   jwt: Object.freeze({
     secret: process.env.JWT_SECRET,
     expiresIn: process.env.JWT_EXPIRES_IN || "1h",

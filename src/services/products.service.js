@@ -1,3 +1,4 @@
+import { logger } from "../config/logger.js";
 import * as productsRepository from "../repositories/products.repository.js";
 import { PRODUCT_STATUS } from "../constants/index.js";
 import { InvalidPriceError, InvalidProductStatusError, InvalidStockError, MissingFieldsError, ProductExistsError, ProductNotFoundError } from "../errors/index.js";
@@ -48,7 +49,7 @@ export const createProduct = async ({ name, description, category, price, stock 
     throw new ProductExistsError();
   }
 
-  return productsRepository.createProduct({
+  const product = await productsRepository.createProduct({
     name,
     description,
     category,
@@ -56,6 +57,9 @@ export const createProduct = async ({ name, description, category, price, stock 
     stock: finalStock,
     status: statusFromStock(finalStock),
   });
+
+  logger.info(`Producto creado: "${product.name}" (id ${product._id}, stock ${product.stock}, ${product.status})`);
+  return product;
 };
 
 // --- Listar productos con filtros, paginación y ordenamiento ---
@@ -117,11 +121,17 @@ export const updateProduct = async ({ productId, updateData }) => {
     safeUpdateData.status = statusFromStock(safeUpdateData.stock);
   }
 
-  return productsRepository.updateProductById(productId, safeUpdateData);
+  const updatedProduct = await productsRepository.updateProductById(productId, safeUpdateData);
+
+  logger.info(`Producto actualizado: id ${productId} (${Object.keys(safeUpdateData).join(", ")})`);
+  return updatedProduct;
 };
 
 // --- Eliminar un producto ---
 export const deleteProduct = async (productId) => {
   await findProductOrFail(productId);
-  return productsRepository.deleteProductById(productId);
+  const deletedProduct = await productsRepository.deleteProductById(productId);
+
+  logger.info(`Producto eliminado: id ${productId}`);
+  return deletedProduct;
 };

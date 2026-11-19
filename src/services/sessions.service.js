@@ -1,3 +1,4 @@
+import { logger } from "../config/logger.js";
 import * as usersRepository from "../repositories/users.repository.js";
 import { hashPassword, comparePassword } from "../utils/hash.js";
 import { EmailExistsError, InvalidEmailError, InvalidPasswordError, MissingFieldsError } from "../errors/index.js";
@@ -32,13 +33,17 @@ export const registerUser = async ({ first_name, last_name, email, password }) =
   const hashedPassword = await hashPassword(password);
 
   // El rol nunca se toma del body: siempre se registra como USER.
-  return usersRepository.createUser({
+  const user = await usersRepository.createUser({
     first_name,
     last_name,
     email: normalizedEmail,
     password: hashedPassword,
     role: USER_ROLES.USER,
   });
+
+  // Se registra el id, no el email ni datos personales.
+  logger.info(`Usuario registrado: id ${user._id}`);
+  return user;
 };
 
 // Devuelve el usuario (sin password) si las credenciales son correctas, o null si no.

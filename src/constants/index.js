@@ -56,3 +56,32 @@ export const MOCK_LIMITS = Object.freeze({
 });
 
 export const MOCK_PASSWORD = "coder123";
+
+export const LOG_LEVELS = Object.freeze({
+  DEBUG: "debug",
+  HTTP: "http",
+  INFO: "info",
+  WARNING: "warning",
+  ERROR: "error",
+  FATAL: "fatal",
+});
+
+// En Winston un número MENOR es más severo: con level "info" se registra info y todo lo más grave
+// (warning, error, fatal), y se descartan http y debug.
+export const LOG_LEVEL_PRIORITY = Object.freeze({
+  [LOG_LEVELS.FATAL]: 0,
+  [LOG_LEVELS.ERROR]: 1,
+  [LOG_LEVELS.WARNING]: 2,
+  [LOG_LEVELS.INFO]: 3,
+  [LOG_LEVELS.HTTP]: 4,
+  [LOG_LEVELS.DEBUG]: 5,
+});
+
+export const LOG_COLORS = Object.freeze({
+  [LOG_LEVELS.FATAL]: "bold red",
+  [LOG_LEVELS.ERROR]: "red",
+  [LOG_LEVELS.WARNING]: "yellow",
+  [LOG_LEVELS.INFO]: "green",
+  [LOG_LEVELS.HTTP]: "magenta",
+  [LOG_LEVELS.DEBUG]: "blue",
+});

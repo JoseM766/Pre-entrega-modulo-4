@@ -5,8 +5,8 @@ import { ERROR_CODES } from "./error-dictionary.js";
 // Opcionalmente: new InvalidMockAmountError("mensaje específico", "detalle para debugging").
 const defineError = (name, code) => {
   const ErrorClass = class extends AppError {
-    constructor(message, details) {
-      super(code, message, details);
+    constructor(message, details, cause) {
+      super(code, message, details, cause);
     }
   };
   Object.defineProperty(ErrorClass, "name", { value: name });
